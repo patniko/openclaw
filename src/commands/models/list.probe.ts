@@ -32,11 +32,13 @@ import { DEFAULT_PROVIDER, formatMs } from "./shared.js";
 
 const PROBE_PROMPT = "Reply with OK. Do not use tools.";
 
-let embeddedRunnerModulePromise: Promise<typeof import("../../agents/pi-embedded.js")> | undefined;
+let runtimeSelectModulePromise:
+  | Promise<typeof import("../../agents/runtime-select.js")>
+  | undefined;
 
-function loadEmbeddedRunnerModule() {
-  embeddedRunnerModulePromise ??= import("../../agents/pi-embedded.js");
-  return embeddedRunnerModulePromise;
+function loadRuntimeSelectModule() {
+  runtimeSelectModulePromise ??= import("../../agents/runtime-select.js");
+  return runtimeSelectModulePromise;
 }
 
 export type AuthProbeStatus =
@@ -456,8 +458,8 @@ async function probeTarget(params: {
     latencyMs: Date.now() - start,
   });
   try {
-    const { runEmbeddedPiAgent } = await loadEmbeddedRunnerModule();
-    await runEmbeddedPiAgent({
+    const { runAgent } = await loadRuntimeSelectModule();
+    await runAgent({
       sessionId,
       sessionFile,
       agentId,

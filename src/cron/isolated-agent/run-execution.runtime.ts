@@ -4,7 +4,7 @@ export { resolveFastModeState } from "../../agents/fast-mode.js";
 export { resolveNestedAgentLane } from "../../agents/lanes.js";
 export { LiveSessionModelSwitchError } from "../../agents/live-model-switch.js";
 export { runWithModelFallback } from "../../agents/model-fallback.js";
-export { runEmbeddedPiAgent } from "../../agents/pi-embedded.js";
+export { runAgent as runEmbeddedPiAgent } from "../../agents/runtime-select.js";
 export {
   countActiveDescendantRuns,
   listDescendantRunsForRequester,
