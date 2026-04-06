@@ -1,9 +1,9 @@
 /**
- * Runtime selector: choose between pi-embedded and copilot-sdk agent runners.
+ * Runtime selector: choose between copilot-sdk and pi-embedded agent runners.
  *
  * Controlled by the `OPENCLAW_RUNTIME` environment variable:
- * - "copilot" → use @github/copilot-sdk (CopilotClient → JSON-RPC → Copilot CLI)
- * - "pi" (default) → use @mariozechner/pi-* (in-process agent loop)
+ * - "copilot" (default) → use @github/copilot-sdk (CopilotClient → JSON-RPC → Copilot CLI)
+ * - "pi" → use @mariozechner/pi-* (in-process agent loop, legacy fallback)
  *
  * This module re-exports the run function matching the active runtime so
  * callers can switch without code changes.
@@ -15,10 +15,10 @@ export type AgentRuntime = "pi" | "copilot";
 
 export function resolveAgentRuntime(): AgentRuntime {
   const env = process.env.OPENCLAW_RUNTIME?.trim().toLowerCase();
-  if (env === "copilot" || env === "copilot-sdk") {
-    return "copilot";
+  if (env === "pi" || env === "pi-embedded") {
+    return "pi";
   }
-  return "pi";
+  return "copilot";
 }
 
 /**
@@ -30,12 +30,12 @@ export function resolveAgentRuntime(): AgentRuntime {
 export async function runAgent(params: RunEmbeddedPiAgentParams): Promise<EmbeddedPiRunResult> {
   const runtime = resolveAgentRuntime();
 
-  if (runtime === "copilot") {
-    const { runCopilotAgent } = await import("./copilot-runner/run.js");
-    return runCopilotAgent(params);
+  if (runtime === "pi") {
+    const { runEmbeddedPiAgent } = await import("./pi-embedded.js");
+    return runEmbeddedPiAgent(params);
   }
 
-  // Default: pi-embedded (existing behavior).
-  const { runEmbeddedPiAgent } = await import("./pi-embedded.js");
-  return runEmbeddedPiAgent(params);
+  // Default: Copilot SDK.
+  const { runCopilotAgent } = await import("./copilot-runner/run.js");
+  return runCopilotAgent(params);
 }

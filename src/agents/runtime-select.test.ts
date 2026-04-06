@@ -12,33 +12,33 @@ describe("resolveAgentRuntime", () => {
     }
   });
 
-  it("defaults to pi when env is unset", () => {
+  it("defaults to copilot when env is unset", () => {
     delete process.env.OPENCLAW_RUNTIME;
+    expect(resolveAgentRuntime()).toBe("copilot");
+  });
+
+  it('returns pi when env is "pi"', () => {
+    process.env.OPENCLAW_RUNTIME = "pi";
     expect(resolveAgentRuntime()).toBe("pi");
   });
 
-  it('returns copilot when env is "copilot"', () => {
-    process.env.OPENCLAW_RUNTIME = "copilot";
-    expect(resolveAgentRuntime()).toBe("copilot");
+  it('returns pi when env is "pi-embedded"', () => {
+    process.env.OPENCLAW_RUNTIME = "pi-embedded";
+    expect(resolveAgentRuntime()).toBe("pi");
   });
 
-  it('returns copilot when env is "copilot-sdk"', () => {
-    process.env.OPENCLAW_RUNTIME = "copilot-sdk";
-    expect(resolveAgentRuntime()).toBe("copilot");
-  });
-
-  it("is case-insensitive", () => {
-    process.env.OPENCLAW_RUNTIME = "COPILOT";
-    expect(resolveAgentRuntime()).toBe("copilot");
+  it("is case-insensitive for pi", () => {
+    process.env.OPENCLAW_RUNTIME = "PI";
+    expect(resolveAgentRuntime()).toBe("pi");
   });
 
   it("trims whitespace", () => {
-    process.env.OPENCLAW_RUNTIME = "  copilot  ";
-    expect(resolveAgentRuntime()).toBe("copilot");
+    process.env.OPENCLAW_RUNTIME = "  pi  ";
+    expect(resolveAgentRuntime()).toBe("pi");
   });
 
-  it("falls back to pi for unknown values", () => {
+  it("defaults to copilot for unknown values", () => {
     process.env.OPENCLAW_RUNTIME = "something-else";
-    expect(resolveAgentRuntime()).toBe("pi");
+    expect(resolveAgentRuntime()).toBe("copilot");
   });
 });
