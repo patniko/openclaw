@@ -13,13 +13,15 @@ import type { AnyAgentTool } from "../pi-tools.types.js";
 /**
  * Convert an OpenClaw AgentTool into a Copilot SDK Tool definition.
  *
- * Returns a structured ToolResultObject so errors are properly reported.
+ * Sets `overridesBuiltInTool` so OpenClaw's tools take precedence when names
+ * collide with the Copilot runtime's built-in tools.
  */
 export function bridgeTool(agentTool: AnyAgentTool): Tool {
   return {
     name: agentTool.name,
     description: agentTool.description,
     parameters: agentTool.parameters as Record<string, unknown> | undefined,
+    overridesBuiltInTool: true,
     handler: async (args: unknown, invocation: ToolInvocation): Promise<ToolResultObject> => {
       const preparedArgs = agentTool.prepareArguments ? agentTool.prepareArguments(args) : args;
 
@@ -52,17 +54,16 @@ export function bridgeTool(agentTool: AnyAgentTool): Tool {
 /**
  * Convert an array of OpenClaw AgentTools into Copilot SDK Tools.
  *
- * Filters out tools that conflict with Copilot runtime built-in tools
- * (bash, read, write, edit) since the runtime already provides those.
+ * Deduplicates by name (first wins) to avoid "Tool names must be unique" errors.
  */
-const RUNTIME_BUILTIN_TOOLS = new Set([
-  "bash",
-  "read_file",
-  "write_file",
-  "edit_file",
-  "list_directory",
-]);
-
 export function bridgeTools(agentTools: AnyAgentTool[]): Tool[] {
-  return agentTools.filter((t) => !RUNTIME_BUILTIN_TOOLS.has(t.name)).map(bridgeTool);
+  const seen = new Set<string>();
+  const result: Tool[] = [];
+  for (const t of agentTools) {
+    if (!seen.has(t.name)) {
+      seen.add(t.name);
+      result.push(bridgeTool(t));
+    }
+  }
+  return result;
 }

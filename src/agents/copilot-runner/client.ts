@@ -56,6 +56,11 @@ export async function createCopilotSession(opts: {
 }): Promise<CopilotSession> {
   const client = getCopilotClient(opts.githubToken);
 
+  // Ensure the CLI server is started before creating a session.
+  console.error("[copilot-runner] starting Copilot CLI server...");
+  await client.start();
+  console.error("[copilot-runner] CLI server ready, creating session...");
+
   const config: SessionConfig = {
     onPermissionRequest: approveAll,
     streaming: opts.streaming ?? true,
@@ -65,7 +70,9 @@ export async function createCopilotSession(opts: {
     ...(opts.workingDirectory ? { workingDirectory: opts.workingDirectory } : {}),
   };
 
-  return client.createSession(config);
+  const session = await client.createSession(config);
+  console.error(`[copilot-runner] session created: ${session.sessionId}`);
+  return session;
 }
 
 /**

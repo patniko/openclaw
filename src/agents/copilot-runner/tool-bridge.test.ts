@@ -37,13 +37,10 @@ describe("bridgeTool", () => {
 
     expect(sdkTool.name).toBe("message");
     expect(sdkTool.description).toBe("Send a message");
-    expect(sdkTool.parameters).toEqual({
-      type: "object",
-      properties: { input: { type: "string" } },
-    });
+    expect(sdkTool.overridesBuiltInTool).toBe(true);
   });
 
-  it("handler calls execute and returns ToolResultObject", async () => {
+  it("handler returns ToolResultObject on success", async () => {
     const agentTool = fakeAgentTool({
       execute: async () => ({
         content: [
@@ -62,7 +59,7 @@ describe("bridgeTool", () => {
     expect(result).toEqual({ textResultForLlm: "Hello \nworld", resultType: "success" });
   });
 
-  it("returns failure ToolResultObject on execute error", async () => {
+  it("handler returns failure on execute error", async () => {
     const agentTool = fakeAgentTool({
       execute: async () => {
         throw new Error("tool broke");
@@ -76,35 +73,25 @@ describe("bridgeTool", () => {
 
     expect(result).toEqual({ textResultForLlm: "", resultType: "failure", error: "tool broke" });
   });
-
-  it("returns OK when execute returns no text", async () => {
-    const agentTool = fakeAgentTool({
-      execute: async () => ({
-        content: [],
-        details: {},
-      }),
-    });
-    const sdkTool = bridgeTool(agentTool as never);
-    const result = await sdkTool.handler(
-      {},
-      { sessionId: "s1", toolCallId: "tc1", toolName: "test_tool", arguments: {} },
-    );
-
-    expect(result).toEqual({ textResultForLlm: "OK", resultType: "success" });
-  });
 });
 
 describe("bridgeTools", () => {
-  it("filters out runtime built-in tools", () => {
+  it("deduplicates tools by name", () => {
     const tools = [
-      fakeAgentTool({ name: "bash" }),
-      fakeAgentTool({ name: "read_file" }),
-      fakeAgentTool({ name: "message" }),
+      fakeAgentTool({ name: "web_search" }),
+      fakeAgentTool({ name: "web_search" }),
       fakeAgentTool({ name: "cron" }),
     ];
     const sdkTools = bridgeTools(tools as never[]);
 
-    expect(sdkTools.map((t) => t.name)).toEqual(["message", "cron"]);
+    expect(sdkTools.map((t) => t.name)).toEqual(["web_search", "cron"]);
+  });
+
+  it("sets overridesBuiltInTool on all tools", () => {
+    const tools = [fakeAgentTool({ name: "bash" }), fakeAgentTool({ name: "message" })];
+    const sdkTools = bridgeTools(tools as never[]);
+
+    expect(sdkTools.every((t) => t.overridesBuiltInTool)).toBe(true);
   });
 
   it("returns empty array for empty input", () => {

@@ -155,6 +155,7 @@ function bindSessionListeners(
     }
 
     copilotSession.on(async (event: SessionEvent) => {
+      console.error(`[copilot-runner] event: ${event.type}`);
       try {
         await handleSessionEvent(event, acc, callbacks);
       } catch {
@@ -307,7 +308,9 @@ async function runCopilotAgentInner(
   // ── Send prompt (with mid-send reconnect) ──
 
   try {
+    console.error(`[copilot-runner] sending prompt (${params.prompt.length} chars)...`);
     await session.send({ prompt: params.prompt });
+    console.error("[copilot-runner] send() returned, waiting for idle...");
   } catch (err) {
     if (isSessionExpired(err)) {
       cleanup();
